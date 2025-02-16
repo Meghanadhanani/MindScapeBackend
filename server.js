@@ -25,7 +25,7 @@ const addSession=require('./routes/addSession.js')
 const getSession=require('./routes/getSession.js')
 const deleteSession=require('./routes/deleteSession.js')
 const profileEdit=require('./routes/profileEdit.js')
-
+const musicCode=require('./routes/musicCode.js')
 
 const path=require('path')
 dotenv.config();
@@ -71,7 +71,7 @@ app.use('/',stateGraph)
 app.use('/',addSession)
 app.use('/',getSession)
 app.use('/',deleteSession)
-
+app.use('/',musicCode)
 
 
 

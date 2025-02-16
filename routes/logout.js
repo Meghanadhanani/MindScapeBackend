@@ -7,3 +7,5 @@ const jwt = require('jsonwebtoken');
 router.post('/logout',(req,res)=>{
     res.status(200).json({message:"Logout successfully..."})
 })
+
+module.exports=router 
