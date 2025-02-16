@@ -4,7 +4,7 @@ const app = express();
 const dotenv = require('dotenv');
 dotenv.config();
 const router = express.Router();
-const Musicuri = "mongodb+srv://niky:123@cluster0.zgjay.mongodb.net/test"
+const Musicuri = process.env.MUSIC_URL
 const client = new MongoClient(Musicuri);
 
 async function run() {
