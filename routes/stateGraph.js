@@ -1,104 +1,98 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const Note = require('../models/notes.js');
-const User = require('../models/user.js');
-
 const router = express.Router();
 
 // Middleware to authenticate JWT token
 const authenticateJWT = (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
-
     if (!token) {
-        return res.sendStatus(403); // Forbidden if no token is provided
+        return res.sendStatus(403);
     }
-
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) {
-            return res.sendStatus(403); // Forbidden if token is invalid
+            return res.sendStatus(403);
         }
-        req.user = user; // Attach user info to request
+        req.user = user;
         next();
     });
 };
 
-// Handle mood data retrieval for a user
 router.get('/mood-data/:id', authenticateJWT, async (req, res) => {
-    const { startDate, endDate } = req.query; // Expecting startDate and endDate
+    const { startDate, endDate } = req.query;
     const userId = req.params.id;
-
-    console.log(`Received startDate: ${startDate}`);
-    console.log(`Received endDate: ${endDate}`);
 
     try {
         if (!startDate || !endDate) {
             return res.status(400).json({ error: 'startDate and endDate are required' });
         }
 
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+        // Update the year to 2025 in the date strings
+        const start = new Date(startDate.replace('2024', '2025'));
+        start.setUTCHours(0, 0, 0, 0);
+        
+        const end = new Date(endDate.replace('2024', '2025'));
+        end.setUTCHours(23, 59, 59, 999);
 
-        // Fetch notes for the user within the specified date range
+        console.log('Processed Start Date:', start.toISOString());
+        console.log('Processed End Date:', end.toISOString());
+
+        // Update the query to handle the user array
         const notes = await Note.find({
-            user: userId,
-            createdAt: { $gte: start, $lte: end }
+            user: userId, // MongoDB will match this against the array
+            createdAt: { 
+                $gte: start, 
+                $lte: end 
+            }
         }).select('mood createdAt');
 
-        if (notes.length === 0) {
-            console.log('No mood data found for this user in the specified date range.');
-            return res.status(200).json([]);  // Return an empty array if no data is found
+        console.log('Found notes:', notes);
+
+        // Initialize array for the week
+        const weekData = [];
+        
+        // Process each day in the date range
+        const currentDate = new Date(start);
+        while (currentDate <= end) {
+            const currentDateStr = currentDate.toISOString().split('T')[0];
+            
+            // Find notes for this day
+            const dayNotes = notes.filter(note => {
+                const noteDate = new Date(note.createdAt);
+                const noteDateStr = noteDate.toISOString().split('T')[0];
+                return noteDateStr === currentDateStr;
+            });
+
+            // Take the most recent mood entry for the day if multiple exists
+            const dayMood = dayNotes.length > 0 
+                ? dayNotes.sort((a, b) => b.createdAt - a.createdAt)[0].mood 
+                : null;
+
+            weekData.push({
+                day: currentDateStr,
+                mood: dayMood,
+                totalEntriesForDay: dayNotes.length
+            });
+
+            currentDate.setDate(currentDate.getDate() + 1);
         }
 
-        // Process notes to group by day of the week and count moods
-        const moodData = {};
-        notes.forEach(note => {
-            const dayOfWeek = note.createdAt.toLocaleDateString('en-US', { weekday: 'short' }); // e.g., "Mon", "Tue"
-            if (!moodData[dayOfWeek]) {
-                moodData[dayOfWeek] = {};
+        res.json({
+            weekData,
+            debug: {
+                requestedDateRange: {
+                    start: start.toISOString(),
+                    end: end.toISOString()
+                },
+                totalNotesFound: notes.length,
+                dateRangeInDays: Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1
             }
-            if (!moodData[dayOfWeek][note.mood]) {
-                moodData[dayOfWeek][note.mood] = 0;
-            }
-            moodData[dayOfWeek][note.mood]++; // Increment mood count for the day
         });
-
-        // Define all mood names that the frontend expects
-        const allMoods = ["Awesome", "Noiicee", "Meh", "Angy", "Sed", "Awful", "Lazy Lad", "Sick"];
-        // Ensure all days of the week are present, even with no data
-        const allDaysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-        allDaysOfWeek.forEach(day => {
-            if (!moodData[day]) {
-                moodData[day] = {}; // Ensure each day has an entry
-            }
-            // Add any missing moods with a count of 0
-            allMoods.forEach(mood => {
-                if (!moodData[day][mood]) {
-                    moodData[day][mood] = 0;
-                }
-            });
-        });
-
-        // Convert the processed data into a chart-friendly format
-        const chartData = allDaysOfWeek.map(day => {
-            const moodCounts = moodData[day];
-            return {
-                day: day,
-                moodCounts: allMoods.reduce((acc, mood) => {
-                    acc[mood] = moodCounts[mood]; // Ensure each mood has a count for that day
-                    return acc;
-                }, {})
-            };
-        });
-
-        console.log("Chart Data (before sending):", chartData);
-
-        res.json(chartData);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error fetching mood data:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
 
 module.exports = router;
-
