@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 router.post('/addsession', async (req, res) => {
-    const { description } = req.body; 
+    const { currentNote } = req.body; 
     const token = req.headers['authorization'] && req.headers['authorization'].split(' ')[1];
 
     if (!token) {
@@ -23,7 +23,7 @@ router.post('/addsession', async (req, res) => {
         });
     }
 
-    if (!description) { 
+    if (!currentNote) { 
         return res.status(400).json({
             success: false,
             message: 'All fields are required'
@@ -46,7 +46,7 @@ router.post('/addsession', async (req, res) => {
         // Create a new session
         const newSession = new Session({
             user: userId,
-            description
+            currentNote
         });
 
         await newSession.save();
@@ -56,7 +56,7 @@ router.post('/addsession', async (req, res) => {
             message: 'Session added successfully',
             Session: {
                 id: newSession._id,
-                description: newSession.description
+                currentNote: newSession.currentNote
             }
         });
 
@@ -71,6 +71,4 @@ router.post('/addsession', async (req, res) => {
 
 
 module.exports=router
-
-
 

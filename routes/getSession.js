@@ -1,10 +1,10 @@
 const express = require('express');
-const Session = require('../models/session.js'); // Import the Session model
+const Session = require('../models/session.js');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 
-router.get('/getsession/:userId', async (req, res) => {
-    const { userId } = req.params; 
+// Middleware to verify JWT token
+const verifyToken = (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
 
     if (!token) {
@@ -16,40 +16,94 @@ router.get('/getsession/:userId', async (req, res) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const authenticatedUserId = decoded.userId; 
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid token'
+        });
+    }
+};
 
-        // Check if the authenticated user ID matches the requested user ID
-        if (authenticatedUserId !== userId) {
-            return res.status(403).json({
-                success: false,
-                message: 'You are not authorized to access this user\'s sessions'
-            });
-        }
-
-        // Fetch all sessions for the given user ID
-        const sessions = await Session.find({ user: userId });
-
-        if (!sessions || sessions.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'No sessions found for this user'
-            });
-        }
+// Get all sessions for a user
+router.get('/sessions', verifyToken, async (req, res) => {
+    try {
+        const sessions = await Session.find({ user: req.user.userId })
+            .sort({ createdAt: -1 }); // Sort by newest first
 
         res.status(200).json({
             success: true,
-            message: 'Session data retrieved successfully',
-            sessions: sessions.map(session => ({
-                id: session._id,
-                description: session.description
-            }))
+            message: 'Sessions retrieved successfully',
+            sessions
         });
-
     } catch (error) {
         console.error('Session retrieval error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error during session data retrieval',
+            message: 'Server error during session retrieval',
+            error: error.message
+        });
+    }
+});
+
+// Create a new session
+router.post('/sessions', verifyToken, async (req, res) => {
+    try {
+        const { description, duration, initialTime, elapsedTime } = req.body;
+        
+        const newSession = new Session({
+            user: req.user.userId,
+            description,
+            duration,
+            initialTime,
+            elapsedTime,
+            date: new Date()
+        });
+
+        await newSession.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Session created successfully',
+            session: newSession
+        });
+    } catch (error) {
+        console.error('Session creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during session creation',
+            error: error.message
+        });
+    }
+});
+
+// Delete a session
+router.delete('/sessions/:sessionId', verifyToken, async (req, res) => {
+    try {
+        const session = await Session.findOne({
+            _id: req.params.sessionId,
+            user: req.user.userId
+        });
+
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                message: 'Session not found or unauthorized'
+            });
+        }
+
+        await session.deleteOne();
+
+        res.status(200).json({
+            success: true,
+            message: 'Session deleted successfully'
+        });
+    } catch (error) {
+        console.error('Session deletion error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during session deletion',
             error: error.message
         });
     }
