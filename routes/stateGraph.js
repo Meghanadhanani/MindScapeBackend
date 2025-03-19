@@ -100,9 +100,9 @@ router.get('/streak/:id', authenticateJWT, async (req, res) => {
     const userId = req.params.id;
 
     try {
-        // Get the current date
+        // Get the current date in user's local time
         const today = new Date();
-        today.setUTCHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
         
         // Get a date 60 days ago to have enough data for streak calculation
         const sixtyDaysAgo = new Date(today);
@@ -113,21 +113,26 @@ router.get('/streak/:id', authenticateJWT, async (req, res) => {
             user: userId,
             createdAt: { 
                 $gte: sixtyDaysAgo, 
-                $lte: today 
+                $lte: new Date() // Use now instead of midnight to include today's entries
             }
         }).select('mood createdAt');
         
-        // Group notes by day
+        console.log(`Found ${notes.length} notes for user ${userId}`);
+        
+        // Group notes by day (in user's local timezone)
         const dayMap = new Map();
         notes.forEach(note => {
             const noteDate = new Date(note.createdAt);
-            const dateStr = noteDate.toISOString().split('T')[0];
+            // Convert to local date string without time component
+            const dateStr = noteDate.toLocaleDateString('en-CA'); // YYYY-MM-DD format
             
             if (!dayMap.has(dateStr)) {
                 dayMap.set(dateStr, []);
             }
             dayMap.get(dateStr).push(note);
         });
+        
+        console.log(`Notes grouped into ${dayMap.size} unique days`);
         
         // Convert to array of days with moods
         const days = Array.from(dayMap.entries()).map(([dateStr, dayNotes]) => {
@@ -142,23 +147,30 @@ router.get('/streak/:id', authenticateJWT, async (req, res) => {
         // Sort days by date (latest first)
         days.sort((a, b) => new Date(b.date) - new Date(a.date));
         
+        console.log('Sorted days:', days.map(d => d.date));
+        
         // Calculate streak
         let streak = 0;
         let currentDate = new Date(today);
         
         // Check if there's an entry for today
-        const todayStr = currentDate.toISOString().split('T')[0];
+        const todayStr = currentDate.toLocaleDateString('en-CA');
         const hasTodayEntry = days.some(day => day.date === todayStr);
+        
+        console.log(`Today is ${todayStr}, has entry: ${hasTodayEntry}`);
         
         // If no entry for today, check if there's one for yesterday to continue the streak
         if (!hasTodayEntry) {
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            const yesterdayStr = yesterday.toLocaleDateString('en-CA');
             const hasYesterdayEntry = days.some(day => day.date === yesterdayStr);
+            
+            console.log(`Yesterday is ${yesterdayStr}, has entry: ${hasYesterdayEntry}`);
             
             // If no entry for yesterday either, the streak is broken
             if (!hasYesterdayEntry) {
+                console.log('No entries for today or yesterday - streak is 0');
                 return res.json({ streak: 0 });
             }
             
@@ -167,19 +179,29 @@ router.get('/streak/:id', authenticateJWT, async (req, res) => {
         }
         
         // Count consecutive days with entries
+        let checkDate = new Date(currentDate);
+        let consecutiveDates = [];
+        
         while (true) {
-            const dateStr = currentDate.toISOString().split('T')[0];
+            const dateStr = checkDate.toLocaleDateString('en-CA');
             const hasEntry = days.some(day => day.date === dateStr);
             
             if (hasEntry) {
                 streak++;
-                currentDate.setDate(currentDate.getDate() - 1);
+                consecutiveDates.push(dateStr);
+                checkDate.setDate(checkDate.getDate() - 1);
             } else {
                 break;
             }
         }
         
-        res.json({ streak });
+        console.log(`Final streak: ${streak}, dates: ${consecutiveDates.join(', ')}`);
+        
+        res.json({ 
+            streak,
+            streakDates: consecutiveDates, // Include dates for debugging
+            dayCount: days.length        // Include total day count for verification
+        });
 
     } catch (error) {
         console.error('Error calculating streak:', error);
