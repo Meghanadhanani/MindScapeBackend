@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const NoteSchema = new mongoose.Schema({
+const feedbackSchema = new mongoose.Schema({
    user:[
                {
                    type:mongoose.Schema.Types.ObjectId,
@@ -8,20 +8,21 @@ const NoteSchema = new mongoose.Schema({
                    required:true
                }
            ],
-    notes: [{
-        title: {
-            type: String,
-            required: true
+    feedbacks: [{
+        name:{
+            type:String,
+            require:true
+        },
+        feedBack:{
+            type:String,
+            require:true
         },
         mood: {
             type: String, 
             enum: ['Awesome', 'Noiicee', 'Meh', 'Angy', 'Sed', 'Awful', 'Lazy Lad', 'Sick'],
             required: true
         },
-        note: {
-            type: String,
-            required: true
-        },
+        
         createdAt: {
             type: Date,
             default: Date.now
@@ -29,5 +30,5 @@ const NoteSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
-const Note = mongoose.model('newNote', NoteSchema);
-module.exports = Note;
+const Feedback= mongoose.model('newFeedback', feedbackSchema);
+module.exports = Feedback;

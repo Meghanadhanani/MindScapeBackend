@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const NoteSchema = new mongoose.Schema({
+const sessionSchema = new mongoose.Schema({
    user:[
                {
                    type:mongoose.Schema.Types.ObjectId,
@@ -8,20 +8,17 @@ const NoteSchema = new mongoose.Schema({
                    required:true
                }
            ],
-    notes: [{
-        title: {
+    sessions: [{
+        duration: {
             type: String,
             required: true
         },
-        mood: {
+        description: {
             type: String, 
-            enum: ['Awesome', 'Noiicee', 'Meh', 'Angy', 'Sed', 'Awful', 'Lazy Lad', 'Sick'],
+            
             required: true
         },
-        note: {
-            type: String,
-            required: true
-        },
+        
         createdAt: {
             type: Date,
             default: Date.now
@@ -29,5 +26,5 @@ const NoteSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
-const Note = mongoose.model('newNote', NoteSchema);
-module.exports = Note;
+const Session = mongoose.model('newSession', sessionSchema);
+module.exports = Session;
