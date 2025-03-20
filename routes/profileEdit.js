@@ -20,7 +20,7 @@ const upload = multer({
 });
 
 router.put('/profileupdate', upload.single("image"), async (req, res) => {
-    const { name, birthDate, gender, hobby } = req.body;
+    const { name, birthDate, gender } = req.body;
     const token = req.headers['authorization'] && req.headers['authorization'].split(' ')[1];
 
     if (!token) {
@@ -30,7 +30,7 @@ router.put('/profileupdate', upload.single("image"), async (req, res) => {
         });
     }
 
-    if (!name || !birthDate || !gender || !hobby) {
+    if (!name || !birthDate || !gender) {
         return res.status(400).json({
             success: false,
             message: 'All fields are required'
@@ -65,7 +65,6 @@ router.put('/profileupdate', upload.single("image"), async (req, res) => {
         user.name = name;
         user.birthDate = dateOfBirth;
         user.gender = gender;
-        user.hobby = hobby;
         
         // Only update image if a new one is provided
         if (req.file) {
@@ -89,7 +88,6 @@ router.put('/profileupdate', upload.single("image"), async (req, res) => {
                 birthDate: formattedBirthDate,
                 gender: user.gender,
                 email: user.email,
-                hobby: user.hobby,
                 image: imageUrl
             }
         });
