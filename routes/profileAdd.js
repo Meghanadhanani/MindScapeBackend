@@ -52,8 +52,15 @@ router.post('/profileadd', upload.single("image"), async (req, res) => {
         const userId = decoded.userId;
 
         
-        const [day, month, year] = birthDate.split('-').map(Number);
-        const dateOfBirth = new Date(year, month - 1, day); 
+        let dateOfBirth;
+        if (birthDate.includes('-')) {
+            // If format is YYYY-MM-DD (from your app)
+            const [year, month, day] = birthDate.split('-').map(Number);
+            dateOfBirth = new Date(year, month - 1, day);
+        } else {
+            // Handle any other format if needed
+            dateOfBirth = new Date(birthDate);
+        }
 
         const user = await User.findById(userId);
         
