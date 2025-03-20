@@ -196,7 +196,7 @@ router.post('/feedback/:userId', async (req, res) => {
       <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>New Feedback Receivedd</title>
+          <title>New Feedback Received</title>
           <style>
               body {
                   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
