@@ -132,9 +132,20 @@ router.put('/profile', upload.single("image"), async (req, res) => {
             });
         }
 
-        // Parse the birthdate in DD-MM-YYYY format
-        const [day, month, year] = birthDate.split('-').map(Number);
-        const dateOfBirth = new Date(year, month - 1, day);
+        // Parse the birthdate correctly based on format
+        let dateOfBirth;
+        if (birthDate.includes('-')) {
+            // If format is YYYY-MM-DD (from your app)
+            const [year, month, day] = birthDate.split('-').map(Number);
+            dateOfBirth = new Date(year, month - 1, day);
+        } else if (birthDate.includes('/')) {
+            // If format is DD/MM/YYYY
+            const [day, month, year] = birthDate.split('/').map(Number);
+            dateOfBirth = new Date(year, month - 1, day);
+        } else {
+            // Fallback to direct Date parsing
+            dateOfBirth = new Date(birthDate);
+        }
 
         // Update user information
         user.name = name;
@@ -149,7 +160,7 @@ router.put('/profile', upload.single("image"), async (req, res) => {
         
         await user.save();
 
-        // Format the birthdate as DD-MM-YYYY for response
+        // Format the birthdate as DD/MM/YYYY for response
         const formattedBirthDate = user.birthDate.toLocaleDateString('en-GB');
         
         // Generate image URL
@@ -170,6 +181,7 @@ router.put('/profile', upload.single("image"), async (req, res) => {
         });
 
     } catch (error) {
+        console.error("Profile update error:", error);
         res.status(500).json({
             success: false,
             message: 'Server error during profile update',
@@ -177,5 +189,3 @@ router.put('/profile', upload.single("image"), async (req, res) => {
         });
     }
 });
-
-module.exports = router;
