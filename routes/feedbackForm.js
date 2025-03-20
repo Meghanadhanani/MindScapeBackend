@@ -139,12 +139,22 @@ router.post('/feedback/:userId', async (req, res) => {
         });
     }
 
-    if (!name || !feedBack || !mood) {
-        return res.status(400).json({
-            success: false,
-            message: 'All fields are required'
-        });
+    const missingFields = [];
+    if (!name) missingFields.push("name");
+    if (!feedBack) missingFields.push("feedBack");
+    if (!mood) missingFields.push("mood");
+  
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          missingFields.length === 1
+            ? `Missing required field: ${missingFields[0]}.`
+            : `Missing required fields: ${missingFields.join(", ")}.`,
+        missingFields,
+      });
     }
+  
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
