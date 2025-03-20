@@ -19,7 +19,7 @@ const feedbackSchema = new mongoose.Schema({
         },
         mood: {
             type: String, 
-            enum: ['Awesome', 'Noiicee', 'Meh', 'Angy', 'Sed', 'Awful', 'Lazy Lad', 'Sick'],
+            enum: ['Awesome', 'Noiicee', 'Meh', 'Awful', 'Fine'],
             required: true
         },
         
