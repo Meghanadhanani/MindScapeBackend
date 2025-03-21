@@ -65,6 +65,7 @@ router.put('/profileupdate', upload.single("image"), async (req, res) => {
         user.name = name;
         user.birthDate = dateOfBirth;
         user.gender = gender;
+        // user.hobby = hobby;
         
         // Only update image if a new one is provided
         if (req.file) {

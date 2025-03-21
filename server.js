@@ -44,7 +44,9 @@ app.use(cors({
 app.use(express.json());
 dotenv.config();
 
-const response = mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+
+const response = mongoose.connect(process.env.MONGODB_URI);
+
 if(response){
     console.log('Connected to DB')
 }
