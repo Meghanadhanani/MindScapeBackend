@@ -4,9 +4,6 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// Assuming you have JWT_SECRET in your environment variables
-// Make sure to add this to your .env file
-// JWT_SECRET=your_jwt_secret_here
 
 router.post('/register', async (req, res) => {
     const { email, password, confirmPassword } = req.body;
@@ -80,3 +77,5 @@ router.post('/register', async (req, res) => {
 });
 
 module.exports = router;
+
+

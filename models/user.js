@@ -14,10 +14,25 @@ const UserSchema=new mongoose.Schema({
         enum: ['male', 'female','other'],
         default: null 
     },
-    image:{
-        type:String,
-        default:null
+    // image:{
+    //     type:String,
+    //     default:null
+    // },
+    image: {
+        data: {
+            type: Buffer,
+            default: null
+        },
+        contentType: {
+            type: String,
+            default: null
+        },
+        filename: {
+            type: String,
+            default: null
+        }
     },
+    
     email:{
         type:String,
         required:true
