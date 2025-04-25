@@ -27,6 +27,10 @@ const deleteSession=require('./routes/deleteSession.js')
 const profileEdit=require('./routes/profileEdit.js')
 const musicCode=require('./routes/musicCode.js')
 const userdelete=require('./routes/deleteUser.js')
+const getUsers=require('./routes/getAllUsers.js')
+const Aicode=require('./routes/tryAiCode.js')
+
+;
 
 const path=require('path')
 dotenv.config();
@@ -39,7 +43,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(cors({
   origin: "*", 
-  methods: ["GET", "POST"]
+  methods: ["GET", "POST","DELETE"]
 }));
 
 app.use(express.json());
@@ -74,7 +78,8 @@ app.use('/',getSession)
 app.use('/',deleteSession)
 app.use('/',musicCode)
 app.use('/',userdelete)
-
+app.use('/',getUsers)
+app.use('/',Aicode)
 
 app.get('/', (req, res) => {
   res.send("Hello from backend");
