@@ -11,7 +11,7 @@ const UserSchema=new mongoose.Schema({
     },
     gender: {
         type: String,
-        enum: ['male', 'female','other'],
+        enum: ['Male', 'Female','Other'],
         default: null 
     },
     // image:{
@@ -47,7 +47,7 @@ const UserSchema=new mongoose.Schema({
          default:null
          
      }
-     ,
+     , profileCreated: { type: Boolean, default: false },
      token: { 
         type: String,
         default: null 

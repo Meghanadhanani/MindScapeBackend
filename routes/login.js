@@ -34,7 +34,11 @@ router.post('/login', async (req, res) => {
         res.status(200).json({ success: true, message: "Login successful!", token, user: {
             ...user.toObject(),
             id:user.id ?user.id : null,
-            image: user.image ? `${process.env.BASE_URL}/uploads/${user.image}` : null
+            image: user.image && user.image.data 
+            ? `data:${user.image.contentType};base64,${user.image.data.toString('base64')}` 
+            : null,
+            profileCreated: user.profileCreated
+            // profileCreated: isProfileCreated ? true : false
         } });
     } catch (error) {
         console.error("Server Error:", error);

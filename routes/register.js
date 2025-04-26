@@ -41,6 +41,7 @@ router.post('/register', async (req, res) => {
             // name,
             email,
             password: hashedPassword,
+            profileCreated: false, // Set to false initially
             
         });
 
@@ -51,6 +52,7 @@ router.post('/register', async (req, res) => {
         const token = jwt.sign(
             { userId: savedUser._id },
             process.env.JWT_SECRET,
+            
             { expiresIn: '7d' }
         );
 
@@ -62,7 +64,8 @@ router.post('/register', async (req, res) => {
             user: {
                 id: savedUser._id,
                 // name: savedUser.name,
-                email: savedUser.email
+                email: savedUser.email,
+                profileCreated: savedUser.profileCreated,
             }
         });
 
