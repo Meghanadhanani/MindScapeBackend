@@ -3,14 +3,25 @@ const User = require('../models/user.js');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const path = require('path');
 
-// Multer config for handling base64 or normal fields
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+// Configure multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, '../uploads'));
+    },
+    filename: (req, file, cb) => {
+        return cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
 
-router.put('/profile', upload.none(), async (req, res) => {
-    const { name, birthDate, gender, hobby, image } = req.body; // Now properly parsed
-    const token = req.headers['authorization']?.split(' ')[1];
+const upload = multer({ 
+    storage: storage,
+});
+
+router.put('/profileupdate', upload.single("image"), async (req, res) => {
+    const { name, birthDate, gender } = req.body;
+    const token = req.headers['authorization'] && req.headers['authorization'].split(' ')[1];
 
     if (!token) {
         return res.status(401).json({
@@ -19,11 +30,19 @@ router.put('/profile', upload.none(), async (req, res) => {
         });
     }
 
+    if (!name || !birthDate || !gender) {
+        return res.status(400).json({
+            success: false,
+            message: 'All fields are required'
+        });
+    }
+
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const userId = decoded.userId;
 
         const user = await User.findById(userId);
+        
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -31,31 +50,35 @@ router.put('/profile', upload.none(), async (req, res) => {
             });
         }
 
-        if (name) user.name = name;
-        if (gender) user.gender = gender;
-        if (hobby) user.hobby = hobby;
-
-        if (birthDate) {
-            const [day, month, year] = birthDate.split('-').map(Number);
-            const dateOfBirth = new Date(year, month - 1, day);
-            if (isNaN(dateOfBirth.getTime())) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid date format. Please use DD-MM-YYYY format.'
-                });
-            }
-            user.birthDate = dateOfBirth;
+        // Parse the birthdate correctly
+        let dateOfBirth;
+        if (birthDate.includes('-')) {
+            // If format is YYYY-MM-DD (from your app)
+            const [year, month, day] = birthDate.split('-').map(Number);
+            dateOfBirth = new Date(year, month - 1, day);
+        } else {
+            // Handle any other format if needed
+            dateOfBirth = new Date(birthDate);
         }
 
-        if (image) {
-            user.image = image; // Now the base64 image will be properly received
+        // Update user information
+        user.name = name;
+        user.birthDate = dateOfBirth;
+        user.gender = gender;
+        // user.hobby = hobby;
+        
+        // Only update image if a new one is provided
+        if (req.file) {
+            user.image = req.file.filename;
         }
-
+        
         await user.save();
 
-        const formattedBirthDate = user.birthDate
-            ? `${String(user.birthDate.getDate()).padStart(2, '0')}-${String(user.birthDate.getMonth() + 1).padStart(2, '0')}-${user.birthDate.getFullYear()}`
-            : null;
+        // Format the birthdate as DD/MM/YYYY for response
+        const formattedBirthDate = user.birthDate.toLocaleDateString('en-GB');
+        
+        // Generate image URL
+        const imageUrl = `${process.env.BASE_URL}/uploads/${user.image}`;
 
         res.status(200).json({
             success: true,
@@ -63,19 +86,18 @@ router.put('/profile', upload.none(), async (req, res) => {
             user: {
                 id: user._id,
                 name: user.name,
-                email: user.email,
                 birthDate: formattedBirthDate,
                 gender: user.gender,
-                hobby: user.hobby,
-                image: user.image
+                email: user.email,
+                image: imageUrl
             }
         });
 
     } catch (error) {
-        console.error('Profile update error:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Server error during profile update',
+            error: error.message
         });
     }
 });
