@@ -11,28 +11,14 @@ const UserSchema=new mongoose.Schema({
     },
     gender: {
         type: String,
-        enum: ['male', 'female','other'],
+        enum: ['Male', 'Female','Other'],
         default: null 
     },
-    // image:{
-    //     type:String,
-    //     default:null
-    // },
-    image: {
-        data: {
-            type: Buffer,
-            default: null
-        },
-        contentType: {
-            type: String,
-            default: null
-        },
-        filename: {
-            type: String,
-            default: null
-        }
+    image:{
+        type:String,
+        default:null
     },
-    
+
     email:{
         type:String,
         required:true
