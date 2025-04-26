@@ -1,0 +1,349 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import Sound from 'react-native-sound';
+import image1 from '../SVG/musiccoip.png';
+import theme from '../utils/theme';
+
+Sound.setCategory('Playback');
+
+const BASE_URL = 'http://192.168.29.204:5000'; // Replace with your backend IP
+
+const initialSongs = [
+  {
+    id: '1',
+    image: image1,
+    title: 'Mirage',
+    artist: 'Dreamfield, SUSHI',
+    filename: 'Floater.mp3',
+  },
+  {
+    id: '2',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'Jazzy_Wave.mp3',
+  },
+
+  {
+    id: '3',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'Controlla.mp3',
+  },
+
+  {
+    id: '4',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'Wonderful_day.mp3',
+  },
+  {
+    id: '5',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'Bustlin.mp3',
+  },
+  {
+    id: '6',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'Summer_Soft_J1AOKFRqCjg.mp3',
+  },
+  {
+    id: '7',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'Affection.mp3',
+  },
+  {
+    id: '8',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'im_closing_my_eyes.mp3',
+  },
+  {
+    id: '9',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'Nonchalant_(feat._Hiroshi_Suzuki).mp3',
+  },
+  {
+    id: '10',
+    image: image1,
+    title: 'Oasis',
+    artist: 'Paradise City, SUSHI',
+    filename: 'The_Afternoon.mp3',
+  },
+];
+
+const MusicScreen = () => {
+  const [songs, setSongs] = useState(initialSongs);
+  const [playingId, setPlayingId] = useState(null);
+  const soundRef = useRef(null);
+
+  // Stop any currently playing sound
+  const stopCurrentSound = () => {
+    if (soundRef.current) {
+      soundRef.current.stop();
+      soundRef.current.release();
+      soundRef.current = null;
+    }
+  };
+
+  const playSong = (song) => {
+    // If clicking the same song that's currently playing, stop it
+    if (playingId === song.id) {
+      stopCurrentSound();
+      setPlayingId(null);
+      return;
+    }
+
+    // Stop any currently playing sound before playing a new one
+    stopCurrentSound();
+
+    // Start playing the new song
+    const streamUrl = `${BASE_URL}/audio/play/${song.filename}`;
+
+    const newSound = new Sound(streamUrl, null, (error) => {
+      if (error) {
+        console.log('Failed to load sound', error);
+        return;
+      }
+      
+      newSound.play((success) => {
+        if (success) {
+          console.log('Finished playing');
+        } else {
+          console.log('Playback failed');
+        }
+        // Only release and reset if this is still the current sound
+        if (soundRef.current === newSound) {
+          soundRef.current.release();
+          soundRef.current = null;
+          setPlayingId(null);
+        }
+      });
+    });
+
+    soundRef.current = newSound;
+    setPlayingId(song.id);
+  };
+
+  // Clean up on component unmount
+  useEffect(() => {
+    return () => {
+      stopCurrentSound();
+    };
+  }, []);
+
+  return (
+    <>
+      <View style={styles.container}>
+        <Text style={styles.header}>Playlists</Text>
+        <Image source={image1} style={styles.playimage} />
+      </View>
+
+      <View style={styles.playlistContainer}>
+        <View style={styles.play1}>
+          <Image source={image1} style={styles.playlistImage} />
+          <View style={styles.playlistInfo}>
+            <View style={styles.playtext}>
+              <Text style={styles.playlistTitle}>Lo-Fi Beats</Text>
+              <Text style={styles.playlistDescription}>Just Relax and Listen</Text>
+              <View style={styles.chilldiv}>
+                <Image source={image1} style={styles.chillimage} />
+                <Text style={styles.playlistArtist}>Chill Beats Music</Text>
+              </View>
+            </View>
+            <View style={styles.playsong}>
+              <Image source={image1} style={styles.playimage2} />
+            </View>
+          </View>
+        </View>
+        <View style={styles.rectangle} />
+      </View>
+
+      <ScrollView style={styles.songContainer}>
+        <Text style={styles.songHeader}>Songs</Text>
+        {songs.map((song) => (
+          <TouchableOpacity
+            key={song.id}
+            style={[styles.card, playingId === song.id && styles.playing]}
+            onPress={() => playSong(song)}
+          >
+            <View style={styles.songInfo}>
+              <View style={styles.textContainer}>
+                <Image source={song.image} style={styles.songImage} />
+                <View>
+                  <Text style={styles.songTitle}>{song.title}</Text>
+                  <Text style={styles.songArtist}>{song.artist}</Text>
+                </View>
+              </View>
+              <View style={styles.playIconContainer}>
+                <Image source={image1} style={styles.playIcon} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+  header: {
+    fontWeight: '500',
+    fontSize: 24,
+  },
+  playimage: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+  },
+  playlistContainer: {
+    padding: 16,
+    borderRadius: 10,
+  },
+  play1: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    elevation: 2,
+  },
+  playlistImage: {
+    width: 160,
+    height: 160,
+    borderRadius: 10,
+  },
+  playlistInfo: {
+    flex: 1,
+    paddingLeft: 10,
+    justifyContent: 'space-between',
+  },
+  playtext: {
+    gap: 10,
+  },
+  playlistTitle: {
+    color: '#2A2A2A',
+    fontSize: 24,
+    fontWeight: '500',
+    textAlign: 'left',
+  },
+  chilldiv: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  chillimage: {
+    width: 20,
+    height: 20,
+    borderRadius: 999,
+  },
+  playlistArtist: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4A4A4A',
+  },
+  playlistDescription: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#4A4A4A',
+  },
+  playsong: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  playimage2: {
+    width: 24,
+    height: 24,
+  },
+  rectangle: {
+    backgroundColor: '#DBD9FB',
+    width: '100%',
+    height: 1,
+    borderRadius: 9999,
+    marginVertical: 10,
+  },
+  songContainer: {
+    borderRadius: 10,
+    backgroundColor: theme.colors.whiteColor,
+    margin: 16,
+    gap: 10,
+    flex: 1,
+  },
+  songHeader: {
+    color: '#2A2A2A',
+    fontWeight: '600',
+    fontSize: 20,
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
+  card: {
+    backgroundColor: theme.colors.whiteColor,
+    marginHorizontal: 15,
+    paddingVertical: 10,
+    borderBottomColor: '#ddd',
+    borderBottomWidth: 1,
+  },
+  playing: {
+    backgroundColor: '#F0F0FF',
+  },
+  songInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  textContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
+  songImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 6,
+  },
+  songTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#2A2A2A',
+  },
+  songArtist: {
+    fontWeight: '400',
+    fontSize: 14,
+    color: '#4A4A4A',
+  },
+  playIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    backgroundColor: '#F5F4FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playIcon: {
+    width: 20,
+    height: 20,
+  },
+});
+
+export default MusicScreen;
