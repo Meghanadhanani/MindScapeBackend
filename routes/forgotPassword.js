@@ -154,7 +154,7 @@ router.post('/forgot-password', async (req, res) => {
                 <div class="otp-code">${otp}</div>
               </div>
               
-              <p class="expiry-note">This OTP will expire in 2 minutes.</p>
+              <p class="expiry-note">This OTP will expire in 10 minutes.</p>
               
               <p>If you did not request a password reset, please ignore this email or contact our support team if you have any concerns.</p>
               
