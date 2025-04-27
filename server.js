@@ -46,7 +46,8 @@ app.use(cors({
   methods: ["GET", "POST","DELETE"]
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit to 10mb
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 dotenv.config();
 
 const response = mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -77,7 +78,7 @@ app.use('/',addSession)
 app.use('/',getSession)
 app.use('/',deleteSession)
 app.use('/',musicCode)
-app.use('/',userdelete)
+app.use('/users',userdelete)
 app.use('/',getUsers)
 app.use('/',Aicode)
 
