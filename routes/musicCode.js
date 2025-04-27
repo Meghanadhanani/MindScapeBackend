@@ -100,43 +100,24 @@ async function run() {
         const audioMetadataCollection = database.collection("audioMetadata"); // Add this line
 
         // Endpoint to list all available audio files along with their images
-        router.get('/audio', async (req, res) => {
-            try {
-                const metadataList = await audioMetadataCollection.find().toArray();
+     router.get('/audio', async (req, res) => {
+    try {
+        const metadataList = await audioMetadataCollection.find().toArray();
 
-                let htmlContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Audio Files</title>
-                    </head>
-                    <body>
-                        <h1>Audio Files</h1>
-                        <ul>`;
+        const songs = metadataList.map(item => ({
+            title: item.title,
+            artist: item.artist,
+            audioUrl: `/audio/play/${item.audioFilename}`,
+            imageUrl: `/audio/image/${item.imageFilename}`,
+        }));
 
-                metadataList.forEach(item => {
-                    htmlContent += `
-                        <li style="margin-bottom: 40px;">
-                            <h3>${item.title}</h3>
-                            <img src="/audio/image/${item.imageFilename}" alt="${item.title}" style="width: 300px; height: auto; display: block; margin-bottom: 10px;" />
-                            <audio controls>
-                                <source src="/audio/play/${item.audioFilename}" type="audio/mpeg">
-                                Your browser does not support the audio tag.
-                            </audio>
-                        </li>`;
-                });
+        res.json(songs);
+    } catch (error) {
+        console.error('Error fetching metadata:', error);
+        res.status(500).send('Error fetching metadata');
+    }
+});
 
-                htmlContent += `
-                        </ul>
-                    </body>
-                    </html>`;
-
-                res.send(htmlContent);
-            } catch (error) {
-                console.error('Error fetching metadata:', error);
-                res.status(500).send('Error fetching metadata');
-            }
-        });
 
         // Endpoint to stream audio file by filename
         router.get('/audio/play/:filename', (req, res) => {
