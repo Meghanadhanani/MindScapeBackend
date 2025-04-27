@@ -29,8 +29,7 @@ const musicCode=require('./routes/musicCode.js')
 const userdelete=require('./routes/deleteUser.js')
 const getUsers=require('./routes/getAllUsers.js')
 const Aicode=require('./routes/tryAiCode.js')
-
-;
+const dashboarduser=require('./routes/dashboardUserDelete.js');
 
 const path=require('path')
 dotenv.config();
@@ -81,6 +80,7 @@ app.use('/',musicCode)
 app.use('/users',userdelete)
 app.use('/',getUsers)
 app.use('/',Aicode)
+app.use('/',dashboarduser)
 
 app.get('/', (req, res) => {
   res.send("Hello from backend");
