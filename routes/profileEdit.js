@@ -26,7 +26,13 @@ router.put('/profile', async (req, res) => {
                 message: 'User not found'
             });
         }
-
+        const validGenders = ['Male', 'Female', 'Other'];
+        if (gender && !validGenders.includes(gender)) {
+            return res.status(400).json({
+                success: false,
+                message: `Please use Male, Female, or Other..`
+            });
+        }
         // Update basic user information if provided
         if (name) user.name = name;
         if (gender) user.gender = gender; // Ensure it matches your enum
